@@ -1,0 +1,35 @@
+# Machine Downtime Log - Docker Compose Configuration
+# For easy local development and deployment
+
+version: '3.8'
+
+services:
+  downtime-log:
+    build: .
+    ports:
+      - "${APP_PORT:-8742}:8742"
+    volumes:
+      - ./data:/data:rw
+      - ./hermes/.env:/app/hermes/.env:ro
+    environment:
+      - APP_PORT=${APP_PORT:-8742}
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://ray-serve-llama.apps.rtp-ai1-ucs.svpod.dc-01.com/v1}
+      - LLM_MODEL=${LLM_MODEL:-/nvidia/nemotron-3-super}
+      - LLM_API_KEY=${LLM_API_KEY:-***}
+      - LLM_TIMEOUT_SECONDS=${LLM_TIMEOUT_SECONDS:-15}
+      - DB_PATH=${DB_PATH:-/data/downtime.db}
+      - SIMULATOR_ENABLED=${SIMULATOR_ENABLED:-true}
+      - SIMULATOR_INTERVAL_SECONDS=${SIMULATOR_INTERVAL_SECONDS:-8}
+      - GITHUB_REPO=${GITHUB_REPO:-https://github.com/pl247/team-2}
+      - GHCR_IMAGE=${GHCR_IMAGE:-ghcr.io/pl247/team-1}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8742/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Named volumes for better management
+volumes:
+  data:
