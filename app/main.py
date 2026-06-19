@@ -255,37 +255,29 @@ async def get_dashboard_data(db: Session = Depends(get_db)):
 # API endpoint for raw event stream (for frontend SSE)
 @app.get("/api/events/stream")
 async def get_event_stream(request: Request):
-    """Server-Sent Events endpoint for real-time event streaming."""
     async def event_generator():
         last_event_id = 0
         while True:
             if await request.is_disconnected():
                 break
             db = SessionLocal()
-        while True:
-            # Check if client disconnected
-            if await request.is_disconnected():
-                break
-                
             try:
-                # Get new events since last check
-                new_events = db.query(models.EventStream).filter(
-                    models.EventStream.id > last_event_id
-                ).order_by(models.EventStream.id).all()
-                
+                new_events = (
+                    db.query(models.EventStream)
+                    .filter(models.EventStream.id > last_event_id)
+                    .order_by(models.EventStream.id)
+                    .all()
+                )
                 for event in new_events:
                     last_event_id = event.id
                     yield f"data: {json.dumps(event.to_dict())}\n\n"
-                    
-                # Wait before checking again
-                await asyncio.sleep(1)
-                
             except Exception as e:
                 logger.error(f"Error in event stream: {e}")
-                yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
-                await asyncio.sleep(5)  # Wait longer on error
-    
-    return event_generator()
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            finally:
+                db.close()
+            await asyncio.sleep(1)
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 # API endpoint to get LLM status
