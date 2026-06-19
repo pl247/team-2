@@ -4,6 +4,7 @@ Main FastAPI application for the Machine Downtime Log.
 import os
 import socket
 import logging
+import json
 from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Depends, Request
@@ -267,11 +268,11 @@ async def get_event_stream(request: Request, db: Session = Depends(get_db)):
                 # Get new events since last check
                 new_events = db.query(models.EventStream).filter(
                     models.EventStream.id > last_event_id
-                ).order(models.EventStream.id).all()
+                ).order_by(models.EventStream.id).all()
                 
                 for event in new_events:
                     last_event_id = event.id
-                    yield f"data: {event.to_dict()}\n\n"
+                    yield f"data: {json.dumps(event.to_dict())}\n\n"
                     
                 # Wait before checking again
                 await asyncio.sleep(1)
