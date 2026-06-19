@@ -16,8 +16,8 @@ from sqlalchemy import func, desc, text
 import asyncio
 
 from . import models, database, llm_client, event_simulator
-from .database import Base, engine, get_db_session, get_db
-
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from .database import Base, engine, get_db_session, get_db, SessionLocal
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
