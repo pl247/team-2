@@ -254,11 +254,14 @@ async def get_dashboard_data(db: Session = Depends(get_db)):
 
 # API endpoint for raw event stream (for frontend SSE)
 @app.get("/api/events/stream")
-async def get_event_stream(request: Request, db: Session = Depends(get_db)):
+async def get_event_stream(request: Request):
     """Server-Sent Events endpoint for real-time event streaming."""
     async def event_generator():
         last_event_id = 0
-        
+        while True:
+            if await request.is_disconnected():
+                break
+            db = SessionLocal()
         while True:
             # Check if client disconnected
             if await request.is_disconnected():
