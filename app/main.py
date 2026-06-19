@@ -11,7 +11,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, text
 import asyncio
 
 from . import models, database, llm_client, event_simulator
@@ -156,7 +156,7 @@ async def health_check():
     # Check database connectivity
     try:
         with get_db_session() as db:
-            db.execute("SELECT 1")
+            db.execute(text("SELECT 1"))
             db_status = "healthy"
     except Exception as e:
         db_status = f"unhealthy: {str(e)}"
@@ -232,7 +232,7 @@ async def get_dashboard_data(db: Session = Depends(get_db)):
             worst_machine_downtime = machine_downtime[worst_machine_id]
         
         # Get recent events (last 20)
-        recent_events = db.query(models.DowntimeEvent).order(
+        recent_events = db.query(models.DowntimeEvent).order_by(
             desc(models.DowntimeEvent.created_at)
         ).limit(20).all()
         

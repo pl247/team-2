@@ -4,6 +4,7 @@ Includes graceful fallback for when the LLM is unreachable or returns malformed 
 """
 import json
 import logging
+import os
 import time
 from typing import Dict, Optional, Tuple
 import requests
